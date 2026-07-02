@@ -16,16 +16,18 @@ class Dot:
 
 BODIES = 40
 WIDTH, HEIGHT = 600, 600
+FPS = 60
 
 rng = np.random.default_rng()
 positions = rng.uniform(0, 1, size=(BODIES, 2))
 vectorized_dot = np.vectorize(Dot)
-dots = vectorized_dot(rng.random(BODIES)).tolist()
+dots = vectorized_dot(rng.uniform(0.5, 0.7, size=BODIES)).tolist()
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
 pixel_data = np.zeros((WIDTH, HEIGHT), dtype=np.uint32)
 
+dt = 1 / FPS
 white = 0xFFFFFFFF
 
 running = True
@@ -50,25 +52,26 @@ while running:
         for pos2, body2 in zip(positions, dots):
             if body1 == body2:
                 continue
-            x_dis = pos1[0] - pos2[0]
-            y_dis = pos1[1] - pos2[1]
-            displacement = np.array([x_dis, y_dis])
-            force -= (
-                G
-                * body1.mass
-                * body2.mass
-                * displacement
-                / ((x_dis**2 + y_dis**2) ** (3 / 2))
-            )
-        body1.vel += force * body1.mass
-        pos1 += body1.vel
-        if 0 > pos1[0] > 1:
-            pos1[0] = clamp(pos1[0], 0.0, 1.0)
-            body1.vel *= [0, 1]
 
-        if 0 > pos1[1] > 1:
-            pos1[1] = clamp(pos1[0], 0.0, 1.0)
-            body1.vel *= [1, 0]
+            displacement = pos1 - pos2
+            distance = np.linalg.norm(displacement)
+
+            if distance < 0.05:
+                continue
+
+            force -= (G * body1.mass * body2.mass * displacement) / (distance**3)
+
+        acceleration = force / body1.mass
+        body1.vel += acceleration * dt
+        pos1 += body1.vel * dt
+
+        if 0 > pos1[0] or pos1[0] > 1:
+            pos1[0] = clamp(pos1[0], 0.0, 1.0)
+            body1.vel[0] *= -0.5
+
+        if 0 > pos1[1] or pos1[1] > 1:
+            pos1[1] = clamp(pos1[1], 0.0, 1.0)
+            body1.vel[1] *= -0.5
 
     pixel_positions = (positions * np.array([WIDTH - 1, HEIGHT - 1])).astype(int)
     pixel_data[pixel_positions[:, 0], pixel_positions[:, 1]] = white
@@ -77,7 +80,7 @@ while running:
 
     pygame.display.flip()
 
-    clock.tick(60)
+    clock.tick(FPS)
 
 # Clean up and exit cleanly
 pygame.quit()

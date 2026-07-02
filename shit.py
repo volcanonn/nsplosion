@@ -92,7 +92,7 @@ while running:
             dist = math.sqrt(
                 (object.x - object2.x) ** 2 + (object.y - object2.y) ** 2
             )  # shouldve used the vectorized formula for gravity award
-            if dist < 0:
+            if dist < 0.03:
                 # Could have them combine but it would fuck with the iterator
                 continue  # crashes when objects are inside eachother award
             force = (
