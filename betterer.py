@@ -12,7 +12,7 @@ class Dot:
         self.mass = mass
 
 
-BODIES = 40
+BODIES = 100
 WIDTH, HEIGHT = 600, 600
 FPS = 60
 
